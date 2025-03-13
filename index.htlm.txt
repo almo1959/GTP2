@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT Redirect</title>
+    <script>
+        async function redirectToGPT() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get("user");
+            if (!userId) {
+                document.body.innerHTML = "<h2>Fejl: Ingen bruger angivet.</h2>";
+                return;
+            }
+
+            const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRhHuijvdMd0susydAto0E1y6X8Wa9zOuRlBAcWqWoDXy5mAG4XrMuY8f_vxTd6HCcqEKv-2Q0Uzq9m/pub?output=csv";
+
+            try {
+                const response = await fetch(sheetURL);
+                const data = await response.text();
+                const rows = data.split("\n").map(row => row.split(","));
+                
+                let gptLink = null;
+                for (let i = 1; i < rows.length; i++) { // Spring første række (headers) over
+                    const [bruger, link] = rows[i].map(cell => cell.trim().replace(/"/g, ''));
+                    if (bruger === userId) {
+                        gptLink = link;
+                        break;
+                    }
+                }
+
+                if (gptLink) {
+                    window.location.href = gptLink;
+                } else {
+                    document.body.innerHTML = "<h2>Fejl: Ingen GPT-link fundet for denne bruger.</h2>";
+                }
+            } catch (error) {
+                document.body.innerHTML = "<h2>Fejl: Kunne ikke hente data.</h2>";
+                console.error(error);
+            }
+        }
+
+        window.onload = redirectToGPT;
+    </script>
+</head>
+<body>
+    <h2>Omdirigerer...</h2>
+</body>
+</html>
